@@ -1,13 +1,16 @@
 (ns gadsby-bot.core
   (:require [cheshire.core :as json]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [twitter.api.restful :as twitter]
+            [twitter.oauth :as tw-oauth])
   (:import (com.twitter Extractor)
            (com.twitter.hbc ClientBuilder)
            (com.twitter.hbc.core Constants)
            (com.twitter.hbc.core.endpoint StatusesSampleEndpoint)
            (com.twitter.hbc.core.processor StringDelimitedProcessor)
            (com.twitter.hbc.httpclient.auth OAuth1)
-           (java.util.concurrent LinkedBlockingQueue)))
+           (java.util.concurrent LinkedBlockingQueue))
+  (:gen-class))
 
 (defn strip-non-alpha [text]
   (clojure.string/replace text #"[^A-Za-z]" ""))
@@ -24,29 +27,26 @@
                               (subs t (.getEnd u))])))
             text urls)))
 
-(def creds {:app "LarY1aNxy9QAFY72ilIV3e6WX"
-            :app-secret "nd8UPgRA4mih1V7DYmNJ0Tvh51dNve0Rt7atCxz3Agltx7euoP"
-            :client "2829808823-tUecgISqnb1Z3CMS2ah9md2UHNkm2duim0M535E"
-            :client-secret "4UqWUFKOr93h23Dwj8N4pUSuqFSDnPLKElLpX9OdDdrCi"})
-
 (defn gadsby? [tweet]
   (let [text (get tweet "text" "")
-        original? (and (= false (get tweet "retweeted"))
-                       (> 0 (.indexOf text "RT")))
-        e-less? (nil? (re-find #"(?i)e" text))
-        long-enough-to-care? (<= 50 (-> text
-                                        strip-urls
-                                        strip-spaces
-                                        strip-non-alpha
-                                        count))
-        english? (= "en" (get tweet "lang"))
-        not-reply? (and (nil? (get tweet "in_reply_to_status_id"))
-                       (nil? (get tweet "in_reply_to_user_id")))]
-    (and original? e-less? long-enough-to-care? english? not-reply?)))
+        conditions {:original?  #(and (= false (get tweet "retweeted"))
+                                      (> 0 (.indexOf text "RT")))
+                    :e-less? #(nil? (re-find #"(?i)e" text))
+                    :long-enough-to-care? #(<= 60 (-> text
+                                                     strip-urls
+                                                     strip-spaces
+                                                     strip-non-alpha
+                                                     count))
+                    :english? #(= "en" (get tweet "lang"))
+                    :not-reply? #(and (nil? (get tweet "in_reply_to_status_id"))
+                                     (nil? (get tweet "in_reply_to_user_id")))
+                    :not-simple-repetition? #(<= 6 (-> text strip-urls strip-non-alpha count))}]
+    (every? (fn [[_ f]] (f)) conditions)))
 
 (defn create-client [queue creds]
   (let [endpoint (StatusesSampleEndpoint.)
-        auth (OAuth1. (:app creds) (:app-secret creds) (:client creds) (:client-secret creds))
+        auth (OAuth1. (:consumer creds) (:consumer-secret creds)
+                      (:client creds) (:client-secret creds))
         client (-> (ClientBuilder.)
             (. hosts (. Constants STREAM_HOST))
             (. endpoint endpoint)
@@ -59,11 +59,26 @@
 (defn create-queue [size]
   (LinkedBlockingQueue. size))
 
+(def oauth-creds (tw-oauth/make-oauth-creds (:consumer creds) (:consumer-secret creds)
+                                            (:client creds) (:client-secret creds)))
+
+(defn fav [tweet creds]
+  (twitter/favorites-create :oauth-creds creds :params {:id (get tweet "id")}))
+
 (defn find-a-tweet [queue]
   (loop []
     (let [tweet (json/parse-string (. queue take))]
-      (if (get tweet "text")
-        (println (get tweet "text")))
       (if (gadsby? tweet)
         tweet
         (recur)))))
+
+(defn -main [& args]
+  (let [q (create-queue 1000)
+        c (create-client q creds)]
+    (try (loop []
+           (-> (find-a-tweet q)
+               (fav oauth-creds)
+               (get-in [:body :text])
+               println)
+           (recur))
+         (finally (.stop c)))))
