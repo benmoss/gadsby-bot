@@ -14,7 +14,7 @@
   (:gen-class))
 
 (defn strip-non-alpha [text]
-  (clojure.string/replace text #"[^A-Za-z]" ""))
+  (clojure.string/replace text #"[^A-Za-z ]" ""))
 
 (defn strip-spaces [text]
   (string/replace text #"\s+" ""))
@@ -28,26 +28,41 @@
                               (subs t (.getEnd u))])))
             text urls)))
 
+(defn not-simple-repetition? [tweet]
+  (<= 6 (-> (get tweet "text")
+            strip-urls
+            strip-non-alpha
+            set
+            count)))
+
+(defn not-word-repetition? [tweet]
+  (<= 10 (-> (get tweet "text")
+             strip-non-alpha
+             (string/split #" ")
+             set
+             count)))
+
+(defn not-reply? [tweet]
+  (and (nil? (get tweet "in_reply_to_status_id"))
+       (nil? (get tweet "in_reply_to_user_id"))))
+
+(defn long-enough-to-care? [tweet]
+  (<= 50 (-> (get tweet "text")
+             strip-urls
+             strip-spaces
+             strip-non-alpha
+             count)))
+
 (defn gadsby? [tweet]
-  (let [text (get tweet "text" "")
-        conditions {:original?  #(and (= false (get tweet "retweeted"))
-                                      (> 0 (.indexOf text "RT")))
-                    :e-less? #(nil? (re-find #"(?i)e" text))
-                    :long-enough-to-care? #(<= 60 (-> text
-                                                     strip-urls
-                                                     strip-spaces
-                                                     strip-non-alpha
-                                                     count))
-                    :english? #(= "en" (get tweet "lang"))
-                    :not-reply? #(and (nil? (get tweet "in_reply_to_status_id"))
-                                     (nil? (get tweet "in_reply_to_user_id")))
-                    :not-simple-repetition? #(<= 6 (-> text strip-urls strip-non-alpha set count))
-                    :not-word-repetition? #(<= 10 (-> text
-                                                      strip-non-alpha
-                                                      (string/split #" ")
-                                                      set
-                                                      count))}]
-    (every? (fn [[_ f]] (f)) conditions)))
+  (let [conditions {:original?  #(and (= false (get % "retweeted"))
+                                      (> 0 (.indexOf (get % "text") "RT")))
+                    :english? #(= "en" (get % "lang"))
+                    :e-less? #(nil? (re-find #"(?i)e" (get % "text")))
+                    :long-enough-to-care? long-enough-to-care?
+                    :not-reply? not-reply?
+                    :not-simple-repetition? not-simple-repetition?
+                    :not-word-repetition? not-word-repetition?}]
+    (every? (fn [[k f]] (f tweet)) conditions)))
 
 (defn create-client [queue creds]
   (let [endpoint (StatusesSampleEndpoint.)
