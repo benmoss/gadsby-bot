@@ -1,32 +1,13 @@
 # gadsby-bot
 
-FIXME: description
+a simple twitter bot that searches for quality tweets that do not contain the
+letter 'e'.
 
-## Installation
-
-Download from http://example.com/FIXME.
+inspired by (http://en.wikipedia.org/wiki/Gadsby_(novel))[http://en.wikipedia.org/wiki/Gadsby_(novel)]
 
 ## Usage
 
-FIXME: explanation
-
-    $ java -jar gadsby-bot-0.1.0-standalone.jar [args]
-
-## Options
-
-FIXME: listing of options this app accepts.
-
-## Examples
-
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
+    $ lein run
 
 ## License
 

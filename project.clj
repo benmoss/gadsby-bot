@@ -1,5 +1,5 @@
 (defproject gadsby-bot "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
+  :description "a twitter bot that searches for e-less tweets"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
