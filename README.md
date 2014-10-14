@@ -3,7 +3,9 @@
 a simple twitter bot that searches for quality tweets that do not contain the
 letter 'e'.
 
-inspired by (http://en.wikipedia.org/wiki/Gadsby_(novel))[http://en.wikipedia.org/wiki/Gadsby_(novel)]
+online at [https://twitter.com/gadsbybot](https://twitter.com/gadsbybot)
+
+inspired by [http://en.wikipedia.org/wiki/Gadsby_(novel)](http://en.wikipedia.org/wiki/Gadsby_(novel))
 
 ## Usage
 
