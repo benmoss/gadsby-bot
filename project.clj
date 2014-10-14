@@ -9,6 +9,7 @@
                                                             [commons-codec]]]
                  [com.twitter/twitter-text "1.6.1"]
                  [twitter-api "0.7.7" ]
-                 [cheshire "5.3.1"]]
+                 [cheshire "5.3.1"]
+                 [environ "1.0.0"]]
   :main gadsby-bot.core
   :aot [gadsby-bot.core])

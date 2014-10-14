@@ -2,7 +2,8 @@
   (:require [cheshire.core :as json]
             [clojure.string :as string]
             [twitter.api.restful :as twitter]
-            [twitter.oauth :as tw-oauth])
+            [twitter.oauth :as tw-oauth]
+            [environ.core :refer [env]])
   (:import (com.twitter Extractor)
            (com.twitter.hbc ClientBuilder)
            (com.twitter.hbc.core Constants)
@@ -58,6 +59,11 @@
 
 (defn create-queue [size]
   (LinkedBlockingQueue. size))
+
+(def creds {:consumer (:consumer env)
+            :consumer-secret (:consumer-secret env)
+            :client (:client env)
+            :client-secret (:client-secret env)})
 
 (def oauth-creds (tw-oauth/make-oauth-creds (:consumer creds) (:consumer-secret creds)
                                             (:client creds) (:client-secret creds)))
