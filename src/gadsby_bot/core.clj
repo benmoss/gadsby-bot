@@ -41,7 +41,12 @@
                     :english? #(= "en" (get tweet "lang"))
                     :not-reply? #(and (nil? (get tweet "in_reply_to_status_id"))
                                      (nil? (get tweet "in_reply_to_user_id")))
-                    :not-simple-repetition? #(<= 6 (-> text strip-urls strip-non-alpha set count))}]
+                    :not-simple-repetition? #(<= 6 (-> text strip-urls strip-non-alpha set count))
+                    :not-word-repetition? #(<= 10 (-> text
+                                                      strip-non-alpha
+                                                      (string/split #" ")
+                                                      set
+                                                      count))}]
     (every? (fn [[_ f]] (f)) conditions)))
 
 (defn create-client [queue creds]
