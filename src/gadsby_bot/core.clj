@@ -57,7 +57,7 @@
   (let [conditions {:original?  #(and (= false (get % "retweeted"))
                                       (> 0 (.indexOf (get % "text") "RT")))
                     :english? #(= "en" (get % "lang"))
-                    :e-less? #(nil? (re-find #"(?i)e" (get % "text")))
+                    :e-less? #(nil? (re-find #"(?i)e" (strip-urls (get % "text"))))
                     :long-enough-to-care? long-enough-to-care?
                     :not-reply? not-reply?
                     :not-simple-repetition? not-simple-repetition?
@@ -108,3 +108,8 @@
                println)
            (recur))
          (finally (.stop c)))))
+
+(comment
+  (gadsby? {"text" "Last night I cut my hair with scissors cuz I'm crazy and it looks amazing http://google.com"
+            "lang" "en"
+            "retweeted" false}))
